@@ -112,8 +112,8 @@ public class EmployeeController {
         return Result.success(employee);
     }
     @PutMapping()
-    public Result updateEmployee(@RequestBody Employee employee){
-        employeeService.update(employee);
+    public Result updateEmployee(@RequestBody EmployeeDTO employeeDTO){
+        employeeService.update(employeeDTO);
         return Result.success();
     }
 }

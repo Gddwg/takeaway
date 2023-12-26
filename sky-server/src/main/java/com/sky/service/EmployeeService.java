@@ -23,5 +23,5 @@ public interface EmployeeService {
 
     Employee getById(Long id);
 
-    void update(Employee employee);
+    void update(EmployeeDTO employeeDTO);
 }

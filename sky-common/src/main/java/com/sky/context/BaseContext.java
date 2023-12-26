@@ -1,5 +1,7 @@
 package com.sky.context;
 
+import com.sky.constant.JwtClaimsConstant;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,6 +19,9 @@ public class BaseContext {
 
     public static void remove() {
         threadLocal.remove();
+    }
+    public static Object getCurrentId(){
+        return get(JwtClaimsConstant.EMP_ID);
     }
 
 }
