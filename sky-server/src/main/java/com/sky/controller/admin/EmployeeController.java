@@ -106,6 +106,12 @@ public class EmployeeController {
         employeeService.startOrStop(status,id);
         return Result.success();
     }
+
+    /**
+     * 根据id获取员工账号
+     * @param id
+     * @return
+     */
     @GetMapping("/{id}")
     public Result<Employee> getById(@PathVariable("id") Long id){
         Employee employee = employeeService.getById(id);
