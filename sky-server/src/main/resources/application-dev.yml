@@ -11,3 +11,12 @@ sky:
     endpoint: oss-cn-beijing.aliyuncs.com
     bucket-name: sky-itcast
     access-key-id: LTAI5tPeFLzsPPT8gG3LPW64
+  redis:
+    database: 2
+    host: 192.168.32.132
+    port: 6379
+    password: 123456
+    max-active: 8
+    max-idle: 8
+    min-idle: 0
+    max-wait: -1ms
