@@ -2,9 +2,11 @@ package com.sky.utils;
 
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONValidator;
+import com.alibaba.fastjson.JSONArray;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -37,7 +39,7 @@ public class RedisUtil {
     public static <R ,ID> R queryWithPassThrough(String keyPrefix, ID id, Class<R> type, Function<ID, R> dbfallback, Long time, TimeUnit unit){
         String key = keyPrefix + id;
         String json = get(key);
-        if(JSONValidator.from(json).validate()){
+        if(StringUtils.isNotBlank(json)){
             return JSON.toJavaObject(JSON.parseObject(json), type);
         }
         if(json != null){
@@ -45,7 +47,25 @@ public class RedisUtil {
         }
         R r = dbfallback.apply(id);
         if(r == null){
-            stringRedisTemplate.opsForValue().set(key, "", CACHE_NULL_TTL, TimeUnit.MINUTES);
+            set(key, " ", CACHE_NULL_TTL, TimeUnit.MINUTES);
+            return null;
+        }
+        set(key,r,time,unit);
+        return r;
+    }
+
+    public static <R ,ID> List<R> queryListWithPassThrough(String keyPrefix, ID id, Class<R> type, Function<ID, List<R>> dbfallback, Long time, TimeUnit unit){
+        String key = keyPrefix + id;
+        String json = get(key);
+        if(StringUtils.isNotBlank(json)){
+            return JSONArray.parseArray(json,type);
+        }
+        if(json != null){
+            return null;
+        }
+        List<R> r = dbfallback.apply(id);
+        if(r == null){
+            set(key, " ", CACHE_NULL_TTL, TimeUnit.MINUTES);
             return null;
         }
         set(key,r,time,unit);
