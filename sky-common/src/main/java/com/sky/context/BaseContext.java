@@ -20,8 +20,12 @@ public class BaseContext {
     public static void remove() {
         threadLocal.remove();
     }
-    public static Object getCurrentId(){
-        return get(JwtClaimsConstant.EMP_ID);
+    public static Long getCurrentId(){
+        return (Long)get(JwtClaimsConstant.EMP_ID);
+    }
+
+    public static Long getUserId(){
+        return (Long)get(JwtClaimsConstant.USER_ID);
     }
 
 }

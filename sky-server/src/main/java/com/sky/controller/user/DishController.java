@@ -6,7 +6,6 @@ import com.sky.entity.Dish;
 import com.sky.redis.DishRedis;
 import com.sky.result.Result;
 import com.sky.service.DishService;
-import com.sky.utils.RedisUtil;
 import com.sky.vo.DishVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -16,7 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+
 
 @RestController("userDishController")
 @RequestMapping("/user/dish")

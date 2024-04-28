@@ -51,7 +51,7 @@ sky:
     user-secret-key: xuan
     user-ttl: 7200000
 
-    user-token-name: token
+    user-token-name: authentication
 
   wechat:
     appid: wxf7969cfc82e32e39

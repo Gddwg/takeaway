@@ -7,8 +7,10 @@ import com.sky.constant.StatusConstant;
 import com.sky.dto.SetmealDTO;
 import com.sky.dto.SetmealPageQueryDTO;
 import com.sky.entity.Dish;
+import com.sky.entity.DishFlavor;
 import com.sky.entity.Setmeal;
 import com.sky.entity.SetmealDish;
+import com.sky.exception.BaseException;
 import com.sky.exception.DeletionNotAllowedException;
 import com.sky.exception.SetmealEnableFailedException;
 import com.sky.mapper.DishMapper;
@@ -23,7 +25,12 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+
+import static com.sky.constant.MessageConstant.*;
 
 /**
  * 套餐业务实现
@@ -56,5 +63,91 @@ public class SetmealServiceImpl implements SetmealService {
      */
     public List<DishItemVO> getDishItemById(Long id) {
         return setmealMapper.getDishItemBySetmealId(id);
+    }
+
+    @Transactional
+    @Override
+    public void saveWithDish(SetmealDTO setmealDTO) {
+        Setmeal setmeal = new Setmeal();
+        BeanUtils.copyProperties(setmealDTO,setmeal);
+        setmealMapper.insert(setmeal);
+
+        Long id = setmeal.getId();
+
+        List<SetmealDish> dishs = setmealDTO.getSetmealDishes();
+
+        if(dishs != null && dishs.size() > 0){
+            dishs.forEach(df->df.setSetmealId(id));
+            setmealDishMapper.insertBatch(dishs);
+        }
+    }
+
+    @Override
+    public PageResult pageQuery(SetmealPageQueryDTO setmealPageQueryDTO) {
+        PageHelper.startPage(setmealPageQueryDTO.getPage(),setmealPageQueryDTO.getPageSize());
+        Page<Setmeal> page = setmealMapper.pageQuery(setmealPageQueryDTO);
+        PageResult pageResult = new PageResult();
+        pageResult.setTotal(page.getTotal());
+        pageResult.setRecords(page.getResult());
+        return pageResult;
+    }
+
+    @Transactional
+    @Override
+    public void deleteBatch(List<Long> ids) {
+        for (Long id : ids) {
+            Setmeal setmeal = setmealMapper.getById(id);
+            if(setmeal.getStatus() == StatusConstant.ENABLE){
+                throw new DeletionNotAllowedException(SETMEAL_ON_SALE);
+            }
+        }
+        setmealMapper.delete(ids);
+        setmealDishMapper.deleteBySetmealId(ids);
+    }
+
+    @Transactional
+    @Override
+    public SetmealVO getByIdWithDish(Long id) {
+        SetmealVO setmealVO = new SetmealVO();
+        Setmeal setmeal = setmealMapper.getById(id);
+        BeanUtils.copyProperties(setmeal,setmealVO);
+        List<SetmealDish> setmealDishes = setmealDishMapper.getBySetmealId(id);
+        setmealVO.setSetmealDishes(setmealDishes);
+        return setmealVO;
+    }
+
+    @Transactional
+    @Override
+    public void update(SetmealDTO setmealDTO) {
+        Setmeal setmeal = new Setmeal();
+        Long id = setmeal.getId();
+        BeanUtils.copyProperties(setmealDTO,setmeal);
+        setmealMapper.update(setmeal);
+        List<Long> ids = new ArrayList<>();
+        ids.add(id);
+        setmealDishMapper.deleteBySetmealId(ids);
+        List<SetmealDish> dishs = setmealDTO.getSetmealDishes();
+        if(dishs != null && dishs.size() > 0){
+            dishs.forEach(df->df.setSetmealId(id));
+            setmealDishMapper.insertBatch(dishs);
+        }
+    }
+
+    @Transactional
+    @Override
+    public void startOrStop(Integer status, Long id) {
+        if (status == StatusConstant.ENABLE) {
+            List<SetmealDish> setmealDishes = setmealDishMapper.getBySetmealId(id);
+            for (SetmealDish setmealDish : setmealDishes) {
+                Dish dish = dishMapper.getById(setmealDish.getDishId());
+                if(dish.getStatus() == StatusConstant.DISABLE){
+                    throw new SetmealEnableFailedException(SETMEAL_ENABLE_FAILED);
+                }
+            }
+        }
+        Setmeal setmeal = new Setmeal();
+        setmeal.setId(id);
+        setmeal.setStatus(status);
+        setmealMapper.update(setmeal);
     }
 }
