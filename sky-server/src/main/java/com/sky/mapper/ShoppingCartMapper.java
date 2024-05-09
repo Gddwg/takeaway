@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Update;
 
+import java.util.ArrayDeque;
 import java.util.List;
 
 @Mapper
@@ -25,4 +26,6 @@ public interface ShoppingCartMapper {
 
     @Delete("delete from shopping_cart where id = #{id}")
     void deleteById(Long id);
+
+    void insertBatch(ArrayDeque<ShoppingCart> shoppingCarts);
 }

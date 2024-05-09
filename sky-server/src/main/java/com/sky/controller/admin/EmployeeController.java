@@ -117,7 +117,7 @@ public class EmployeeController {
         Employee employee = employeeService.getById(id);
         return Result.success(employee);
     }
-    @PutMapping()
+    @PutMapping
     public Result updateEmployee(@RequestBody EmployeeDTO employeeDTO){
         employeeService.update(employeeDTO);
         return Result.success();

@@ -1,6 +1,5 @@
 package com.sky.controller.user;
 
-import com.sky.constant.RedisConstants;
 import com.sky.constant.StatusConstant;
 import com.sky.entity.Dish;
 import com.sky.redis.DishRedis;

@@ -1,7 +1,10 @@
 package com.sky.interceptor;
 
 import com.sky.constant.JwtClaimsConstant;
+import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
+import com.sky.exception.BaseException;
+import com.sky.exception.LoginFailedException;
 import com.sky.properties.JwtProperties;
 import com.sky.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
@@ -40,38 +43,41 @@ public class JwtTokenAdminInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        //1、从请求头中获取令牌
-        String userToken = request.getHeader(jwtProperties.getUserTokenName());
-        log.info("jwt校验:{}", userToken);
-        try {
-            Claims claims = JwtUtil.parseJWT(jwtProperties.getUserSecretKey(), userToken);
-            Long userId = Long.valueOf(claims.get(JwtClaimsConstant.USER_ID).toString());
-            log.info("当前用户id:{}", userId);
-
-            BaseContext.set(JwtClaimsConstant.USER_ID,userId);
-
-            //3、通过，放行
-            return true;
-        } catch (Exception ex) {
-
-        }
-        String adminToken = request.getHeader(jwtProperties.getAdminTokenName());
-        log.info("jwt校验:{}", adminToken);
-        //2、校验令牌
-        try {
-
-            Claims claims = JwtUtil.parseJWT(jwtProperties.getAdminSecretKey(), adminToken);
-            Long empId = Long.valueOf(claims.get(JwtClaimsConstant.EMP_ID).toString());
-            log.info("当前员工id:{}", empId);
-
-            BaseContext.set(JwtClaimsConstant.EMP_ID,empId);
-
-            //3、通过，放行
-            return true;
-        } catch (Exception ex) {
-            //4、不通过，响应401状态码
-            response.setStatus(401);
-            return false;
+        if(request.getServletPath().contains("admin")){
+            String adminToken = request.getHeader(jwtProperties.getAdminTokenName());
+            log.info("jwt校验:{}", adminToken);
+            if(adminToken == null){
+                throw new LoginFailedException(MessageConstant.USER_NOT_LOGIN);
+            }
+            try {
+                Claims claims = JwtUtil.parseJWT(jwtProperties.getAdminSecretKey(), adminToken);
+                Long empId = Long.valueOf(claims.get(JwtClaimsConstant.EMP_ID).toString());
+                log.info("当前员工id:{}", empId);
+                BaseContext.set(JwtClaimsConstant.EMP_ID,empId);
+                //3、通过，放行
+                return true;
+            } catch (Exception ex) {
+                response.setStatus(401);
+                return false;
+            }
+        }else {
+            String userToken = request.getHeader(jwtProperties.getUserTokenName());
+            log.info("jwt校验:{}", userToken);
+            if(userToken == null){
+                throw new LoginFailedException(MessageConstant.USER_NOT_LOGIN);
+            }
+            try {
+                Claims claims = JwtUtil.parseJWT(jwtProperties.getUserSecretKey(), userToken);
+                Long userId = Long.valueOf(claims.get(JwtClaimsConstant.USER_ID).toString());
+                log.info("当前用户id:{}", userId);
+                BaseContext.set(JwtClaimsConstant.USER_ID,userId);
+                //3、通过，放行
+                return true;
+            } catch (Exception ex) {
+                //4、不通过，响应401状态码
+                response.setStatus(401);
+                return false;
+            }
         }
     }
     @Override
