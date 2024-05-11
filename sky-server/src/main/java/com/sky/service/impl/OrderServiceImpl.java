@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
@@ -16,14 +17,13 @@ import com.sky.mapper.*;
 import com.sky.result.PageResult;
 import com.sky.service.OrderService;
 import com.sky.vo.*;
+import com.sky.websocket.WebSocketServer;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -38,6 +38,8 @@ public class OrderServiceImpl implements OrderService {
     private ShoppingCartMapper shoppingCartMapper;
     @Autowired
     private UserMapper userMapper;
+    @Autowired
+    private WebSocketServer webSocketServer;
 
     @Transactional
     public OrderSubmitVO submitOrder(OrdersSubmitDTO ordersSubmitDTO) {
@@ -120,8 +122,12 @@ public class OrderServiceImpl implements OrderService {
     }
 
     public OrderVO orderDetail(Long id) {
-        //TODO 用户约束
-        Orders order = orderMapper.getById(id);
+        Orders order = getOrder(id);
+        //用户约束
+        if(BaseContext.getCurrentId() == null && BaseContext.getUserId() != order.getUserId()){
+            throw new OrderBusinessException(MessageConstant.UNKNOWN_ERROR);
+        }
+
         OrderVO orderVO = new OrderVO();
         BeanUtils.copyProperties(order,orderVO);
         List<OrderDetail> list = orderDetailMapper.getByOrderId(id);
@@ -130,8 +136,12 @@ public class OrderServiceImpl implements OrderService {
     }
 
     public void cancel(Long id, String cancelReason) {
-        //TODO 用户约束
         Orders order = getOrder(id);
+        //用户约束
+        if(BaseContext.getCurrentId() == null && BaseContext.getUserId() != order.getUserId()){
+            throw new OrderBusinessException(MessageConstant.UNKNOWN_ERROR);
+        }
+
         Integer status = order.getStatus();
         if(status == Orders.CANCELLED){
             throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
@@ -216,6 +226,17 @@ public class OrderServiceImpl implements OrderService {
         orderMapper.update(order);
     }
 
+    public void reminder(Long id) {
+        Orders order = getOrder(id);
+        orderStatus(order.getStatus(),Orders.TO_BE_CONFIRMED);
+        Map map = new HashMap<>();
+        map.put("type",2);
+        map.put("orderId",id);
+        map.put("content","订单号:" + order.getNumber());
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
+    }
+
     private Orders getOrder(Long id){
         Orders order = orderMapper.getById(id);
         if(order == null){
@@ -250,5 +271,13 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         orderMapper.update(orders);
+
+        //来单提醒
+        Map map = new HashMap<>();
+        map.put("type",1);
+        map.put("orderId",ordersDB.getId());
+        map.put("content","订单号:" + outTradeNo);
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
     }
 }
