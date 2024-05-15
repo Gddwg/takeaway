@@ -6,4 +6,16 @@
         insert into user( openid, name, phone, sex, id_number, avatar, create_time)
             VALUES ( #{openid}, #{name}, #{phone}, #{sex}, #{idNumber}, #{avatar}, #{createTime});
     </insert>
+
+    <select id="countByMap" resultType="Integer">
+        select count(*) from user
+        <where>
+            <if test="end != null">
+                and create_time &lt; #{end}
+            </if>
+            <if test="begin != null">
+                and create_time > #{begin}
+            </if>
+        </where>
+    </select>
 </mapper>

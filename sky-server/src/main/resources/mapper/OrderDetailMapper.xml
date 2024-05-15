@@ -9,4 +9,15 @@
         </foreach>
     </insert>
 
+    <select id="sumStatistics" resultType="NameAndNumber">
+        select name,sum(number) number from order_detail
+        <where>
+            order_id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </where>
+        group by name
+        order by number desc
+    </select>
 </mapper>
